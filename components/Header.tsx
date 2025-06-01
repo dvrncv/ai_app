@@ -10,18 +10,19 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 type HeaderProps = {
   fontLoaded: boolean;
 };
-const Header: React.FC<HeaderProps> = ({ fontLoaded }) => {
+const Header: React.FC<HeaderProps> = () => {
   const [modalVisible, setModalVisible] = useState(false);
-
-  if (!fontLoaded) return null;
+  const router = useRouter();
 
   const handleLogout = (event: GestureResponderEvent) => {
     setModalVisible(false);
     console.log('Выполнен выход');
+    router.replace('/LoginPage');
 
   };
 
