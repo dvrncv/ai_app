@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     position: 'absolute',
     left: '50%',
-    transform: [{ translateX: -0.5 * 150 }, { translateY: 20 },], 
+    transform: [{ translateX: -0.5 * 140 }, { translateY: 20 },], 
     flexDirection: 'row',
     alignItems: 'center',
     width: 200, 
@@ -141,4 +141,4 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
   },
-});
+});  
