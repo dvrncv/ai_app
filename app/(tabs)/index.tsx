@@ -12,13 +12,7 @@ import {
 import Header from '../../components/Header';
 
 export default function HomeScreen() {
-  const [modalVisible, setModalVisible] = useState(false);
-  const handleLogout = () => {
-    setModalVisible(false);
-    console.log('Выполнен выход');
-    // Здесь можешь вызвать метод выхода или навигацию
-    // Например: navigation.navigate('Login') 
-  };
+
   return (
     <View>
       <Header/>
