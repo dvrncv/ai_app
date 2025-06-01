@@ -20,8 +20,9 @@ export default function HomeScreen() {
     console.log('Выполнен выход');
   
   };
-  const [temperature, setTemperature] = useState('27 °C');
+    const [temperature, setTemperature] = useState('');
     const [clothingRecommendation, setClothingRecommendation] = useState('');
+    const [weatherDescription, setWeatherDescription ] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
   
@@ -75,38 +76,42 @@ export default function HomeScreen() {
 
     const [weatherCondition, setWeatherCondition] = useState<string>('Default');
     useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setError('Доступ к местоположению запрещен');
-        return;
-      }
+      const fetchWeather = async () => {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setError('Доступ к местоположению запрещен');
+          return;
+        }
 
-      try {
-        const location = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = location.coords;
+        try {
+          const location = await Location.getCurrentPositionAsync({});
+          const { latitude, longitude } = location.coords;
+          const apiKey = '648aa41bd49fa2e04d6f3e02c510567d';
 
-        
-        const response = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=ru&appid=${apiKey}`
-        );
-        const data = await response.json();
-        console.log('OpenWeather response:', data);
+          const response = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=ru&appid=${apiKey}`
+          );
+          const data = await response.json();
+          console.log('OpenWeather response:', data);
+          setError('');
 
-        const temp = Math.round(data.main.temp);
-        const condition = data.weather[0].main;
-        const icon = getWeatherIcon(condition);
+          const temp = Math.round(data.main.temp);
+          const condition = data.weather[0].main;
 
-        setTemperature(`${temp} °C`);
-        setWeatherCondition(data.weather[0].main);
-        setClothingRecommendation(`Сейчас ${data.weather[0].description}.`);
-        console.log('Weather main:', data.weather[0].main);
-        console.log('Weather description:', data.weather[0].description);
-      } catch (err) {
-        setError('Ошибка загрузки погоды');
-      }
-    })();
-  }, []);
+          setTemperature(`${temp} °C`);
+          setWeatherCondition(condition);
+          setWeatherDescription(`Сейчас ${data.weather[0].description}.`);
+        } catch (err) {
+          setError('Ошибка загрузки погоды');
+        }
+      };
+
+      fetchWeather();
+
+      const interval = setInterval(fetchWeather, 10 * 60 * 1000);
+
+      return () => clearInterval(interval); 
+    }, []);
 
 
   return (
@@ -115,12 +120,25 @@ export default function HomeScreen() {
         <Header />
       </View>
       <View style={styles.container}>
-            <TouchableOpacity 
+            {weatherCondition && (
+              <View style={styles.weatherContainer}>
+                  <View style={styles.weatherIconRow}>
+                    <Image
+                      source={getWeatherIcon(weatherCondition)}
+                      style={{ width: 100, height: 100, marginRight: 10 }}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.weatherTextSize}>{temperature}</Text>
+                  </View>
+                  <Text style={styles.weatherText}>{weatherDescription}</Text>
+                </View>
+            )}
+            {/* <TouchableOpacity 
               style={styles.button}
               onPress={() => router.push('/')}
            >
               <Text style={styles.buttonText}>Моя галерея</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
       
             <TouchableOpacity 
               style={styles.button}
@@ -129,6 +147,7 @@ export default function HomeScreen() {
             >
               <Text style={styles.buttonText}>Получить предложение</Text>
             </TouchableOpacity>
+            
       
             {loading && <ActivityIndicator size="large" color="#4A90E2" />}
       
@@ -183,11 +202,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     fontFamily: 'Lora-Bold', 
   },
+  weatherText: {
+    fontSize: 20, 
+    color: '#4182C2',
+    textAlign: 'center',
+    marginVertical: 20,
+    paddingHorizontal: 20,
+    fontFamily: 'Lora-Bold', 
+  },
   errorText: {
     fontSize: 20, 
     color: 'red',
     textAlign: 'center',
     marginVertical: 20,
     fontFamily: 'Lora-Bold',
+  },
+  weatherIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 5,
+    gap:10,
+  },
+  weatherContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  weatherTextSize: {
+    fontSize: 30, 
+    color: '#4182C2',
+    
   },
 });
