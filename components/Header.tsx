@@ -11,8 +11,13 @@ import {
   View,
 } from 'react-native';
 
-const Header: React.FC = () => {
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
+type HeaderProps = {
+  fontLoaded: boolean;
+};
+const Header: React.FC<HeaderProps> = ({ fontLoaded }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+
+  if (!fontLoaded) return null;
 
   const handleLogout = (event: GestureResponderEvent) => {
     setModalVisible(false);
@@ -106,8 +111,8 @@ const styles = StyleSheet.create({
   text: {
     color: 'white',
     fontSize: 20,
-    fontWeight: 'bold',
     flex: 1,
+    fontFamily: 'Lora-Bold',
   },
   modalOverlay: {
     flex: 1,
@@ -125,6 +130,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 20,
     textAlign: 'center',
+    fontFamily: 'Lora-Bold',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -140,5 +146,6 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: 'white',
     fontSize: 16,
+    fontFamily: 'Lora-Bold',
   },
 });  
