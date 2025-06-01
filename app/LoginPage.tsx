@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     color: '#2E70C9',
-    fontWeight: 'bold',
+    fontFamily: 'Lora-Bold',
     textDecorationLine: 'underline',
   },
   label: {
@@ -161,7 +161,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
     fontFamily: 'Lora-Bold',
   },
 });

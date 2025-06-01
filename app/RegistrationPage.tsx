@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   logo: {
     color: '#fff',
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Lora-Bold',
   },
   loginBox: {
     marginTop: 50,
@@ -149,8 +149,9 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     color: '#2E70C9',
-    fontWeight: 'bold',
+    fontFamily: 'Lora-Bold',
     textDecorationLine: 'underline',
+    
   },
   label: {
     marginBottom: 5,
@@ -187,7 +188,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
     fontFamily: 'Lora-Bold',
   },
   errorText: {
