@@ -10,12 +10,21 @@ import {
   View,
 } from 'react-native';
 import Header from '../../components/Header';
+import Home from '../../components/HomePageScreen';
 
 export default function HomeScreen() {
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const handleLogout = () => {
+    setModalVisible(false);
+    console.log('Выполнен выход');
+  
+  };
 
   return (
     <View>
       <Header/>
+      <Home/>
     </View>
   );
 }
