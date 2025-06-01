@@ -1,5 +1,6 @@
 import Header from '@/components/Header';
 import * as Location from 'expo-location';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {

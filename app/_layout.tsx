@@ -1,9 +1,12 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import Header from '@/components/Header';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 import 'react-native-reanimated';
+import LoginPage from './LoginPage';
+
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -19,14 +22,9 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Header fontLoaded={loaded} />
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-    
+    <Stack initialRouteName="LoginPage" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="LoginPage" />
+      <Stack.Screen name="(tabs)" />
+    </Stack>
   );
 }
