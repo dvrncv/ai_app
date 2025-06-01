@@ -112,7 +112,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.mainContainer}>
       <View>
-        <Header/>
+        <Header />
       </View>
       <View style={styles.container}>
             <TouchableOpacity 
@@ -131,12 +131,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
       
             {loading && <ActivityIndicator size="large" color="#4A90E2" />}
-
-            <Text style={styles.temperatureText}>{temperature}</Text>
-            <Image
-              source={getWeatherIcon(weatherCondition)}
-              style={{ width: 100, height: 100 }}
-            />
       
             {error ? (
               <Text style={styles.errorText}>{error}</Text>
@@ -157,13 +151,14 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 16,
     alignItems: 'center',
     backgroundColor: '#f5f5f5',
   },
   button: {
     backgroundColor: '#4182C2', 
-    padding: 15,
+    padding: 10,
     borderRadius: 10,
     marginVertical: 10,
     width: '80%',
