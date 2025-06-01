@@ -1,110 +1,178 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import React, { useState } from 'react';
+import Header from '@/components/Header';
+import * as ImagePicker from 'expo-image-picker';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Modal, Pressable } from 'react-native';
 
-export default function TabTwoScreen() {
+
+
+export default function GalleryScreen() {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [galleryItems, setGalleryItems] = useState([
+    { id: 1, image: require('@/assets/images/outfit.png') },
+    { id: 2, image: require('@/assets/images/outfit.png') },
+    { id: 3, image: require('@/assets/images/outfit.png') },
+    { id: 4, image: require('@/assets/images/outfit.png') },
+  ]);
+    const pickImage = async () => {
+  
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert('Нужно разрешение для доступа к галерее!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const newImage = { id: Date.now(), image: { uri: result.assets[0].uri } };
+      setGalleryItems((prevItems) => [...prevItems, newImage]);
+    }
+  };
+
+  
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <View style={styles.mainContainer}>
+      <Header />
+          <Modal visible={modalVisible} transparent={true}>
+            <View style={styles.modalContainer}>
+              <Pressable
+                style={styles.modalBackdrop}
+                onPress={() => setModalVisible(false)}
+              />
+              <Image
+                source={
+                  typeof selectedImage === 'number'
+                    ? selectedImage
+                    : { uri: selectedImage?.uri }
+                }
+                style={styles.fullscreenImage}
+              />
+            </View>
+          </Modal>
+          
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.uploadBox}>
+        <MaterialCommunityIcons name="cloud-upload-outline" size={100} color="#4182C2" style={styles.uploadIcon} />
+        <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
+          <Text style={styles.uploadButtonText}>Загрузить фотографию</Text>
+        </TouchableOpacity>
+      </View>
+        <Text style={styles.galleryTitle}>Моя галерея</Text>
+        <View style={styles.galleryGrid}>
+          {galleryItems.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.galleryItem}
+              onPress={() => {
+                setSelectedImage(item.image);
+                setModalVisible(true);
+              }}
+            >
+                <Image
+                  source={typeof item.image === 'number' ? item.image : { uri: item.image.uri }}
+                  style={styles.galleryImage}
+                />
+              </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
   },
-  titleContainer: {
+  content: {
+    padding: 20,
+    paddingTop: 10,
+  },
+  uploadContainer: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  uploadBox: {
+    backgroundColor: '#E8F1FB',
+    borderRadius: 10,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  uploadButton: {
+    backgroundColor: '#4182C2',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  uploadIcon: {
+    marginBottom: 16,
+  },
+  uploadIconText: {
+    color: 'white',
+    fontSize: 20,
+    lineHeight: 20,
+    fontFamily: 'Lora-Bold',
+  },
+  uploadButtonText: {
+  color: 'white',
+  fontSize: 20,
+  fontFamily: 'Lora-Bold',
+  },
+  galleryTitle: {
+  fontSize: 20,
+  marginBottom: 15,
+  color: '#4182C2',
+  fontFamily: 'Lora-Bold',
+  borderWidth: 4,              
+  borderColor: '#4182C2',      
+  padding: 8,                 
+  borderRadius: 8,             
+  textAlign: 'center',         
+  },
+  galleryGrid: {
     flexDirection: 'row',
-    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  galleryItem: {
+    width: '48%',
+    aspectRatio: 1,
+    marginBottom: 15,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#F5F5F5',
+  },
+  galleryImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  modalContainer: {
+  flex: 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  fullscreenImage: {
+    width: '90%',
+    height: '70%',
+    resizeMode: 'contain',
+    borderRadius: 12,
+    zIndex: 10,
   },
 });
