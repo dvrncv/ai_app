@@ -7,8 +7,10 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Image
 } from 'react-native';
+
 
 export default function HomeScreen() {
 
@@ -50,12 +52,62 @@ export default function HomeScreen() {
         setError('Не удалось получить местоположение');
       }
     };
-  
+
+    
+      const router = useRouter();
+
+    const weatherIcons = {
+      Clear: require('../../assets/weatherImages/Clear.png'),
+      Clouds: require('../../assets/weatherImages/Clouds.png'),
+      Rain: require('../../assets/weatherImages/Rain.png'),
+      Snow: require('../../assets/weatherImages/Snow.png'),
+      Thunderstorm: require('../../assets/weatherImages/Thunderstorm.png'),
+      Drizzle: require('../../assets/weatherImages/Drizzle.png'),
+      Mist: require('../../assets/weatherImages/Fog.png'),
+      Haze: require('../../assets/weatherImages/Fog.png'),
+      Fog: require('../../assets/weatherImages/Fog.png'),
+      Default: require('../../assets/weatherImages/Default.png'),
+    };
+
+    const getWeatherIcon = (condition: string) => {
+      return weatherIcons[condition] || weatherIcons['Default'];
+    };
+
+    const [weatherCondition, setWeatherCondition] = useState<string>('Default');
     useEffect(() => {
-      getLocationAndWeather();
-    }, []);
-  
-    const router = useRouter();
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError('Доступ к местоположению запрещен');
+        return;
+      }
+
+      try {
+        const location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+
+        
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=ru&appid=${apiKey}`
+        );
+        const data = await response.json();
+        console.log('OpenWeather response:', data);
+
+        const temp = Math.round(data.main.temp);
+        const condition = data.weather[0].main;
+        const icon = getWeatherIcon(condition);
+
+        setTemperature(`${temp} °C`);
+        setWeatherCondition(data.weather[0].main);
+        setClothingRecommendation(`Сейчас ${data.weather[0].description}.`);
+        console.log('Weather main:', data.weather[0].main);
+        console.log('Weather description:', data.weather[0].description);
+      } catch (err) {
+        setError('Ошибка загрузки погоды');
+      }
+    })();
+  }, []);
+
 
   return (
     <View style={styles.mainContainer}>
@@ -79,6 +131,12 @@ export default function HomeScreen() {
             </TouchableOpacity>
       
             {loading && <ActivityIndicator size="large" color="#4A90E2" />}
+
+            <Text style={styles.temperatureText}>{temperature}</Text>
+            <Image
+              source={getWeatherIcon(weatherCondition)}
+              style={{ width: 100, height: 100 }}
+            />
       
             {error ? (
               <Text style={styles.errorText}>{error}</Text>
@@ -86,7 +144,7 @@ export default function HomeScreen() {
               <Text style={styles.recommendationText}>{clothingRecommendation}</Text>
             )}
       
-            <Text style={styles.temperatureText}>{temperature}</Text>
+            
           </View>
     </View>
   );
@@ -101,7 +159,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 50,
     backgroundColor: '#f5f5f5',
   },
   button: {
