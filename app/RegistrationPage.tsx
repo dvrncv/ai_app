@@ -5,6 +5,10 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome, Entypo, MaterialIcons } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
+import { signup } from '../redux/slices/auth'; 
+import type { AppDispatch } from '../redux/store';
+
 
 
 export default function LoginPage() {
@@ -13,15 +17,30 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const handleLogin = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const [login, setLogin] = useState('');
+
+const handleSignup = async () => {
     if (password !== confirmPassword) {
-        setError('Пароли не совпадают');
-        return;
+      setError('Пароли не совпадают');
+      return;
+    }
+    if (!login || !password) {
+      setError('Пожалуйста, заполните все поля');
+      return;
     }
     setError('');
-    router.replace('(tabs)');
+    try {
+      const response = await dispatch(signup({ login, password })).unwrap();
+    if (response && response.token) {
+      router.replace('/(tabs)');
+    } else {
+      setError('Токен не получен, попробуйте войти снова');
+    }
+  } catch (err: any) {
+    setError(err.message || 'Ошибка регистрации');
+  } 
 };
-
 
   return (
     <View style={styles.container}>
@@ -53,7 +72,12 @@ export default function LoginPage() {
 
         <Text style={styles.label}>Email</Text>
         <View style={styles.inputRow}>
-          <TextInput style={styles.input} placeholder="Введите email" />
+          <TextInput 
+            style={styles.input} 
+            placeholder="Введите email" 
+            value={login}
+            onChangeText={setLogin}
+          />
           <FontAwesome name="envelope-o" size={20} color="#2E70C9" />
         </View>
 
@@ -88,7 +112,7 @@ export default function LoginPage() {
         )}
 
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}  onPress={handleLogin}>Зарегистрироваться</Text>
+          <Text style={styles.buttonText}  onPress={handleSignup}>Зарегистрироваться</Text>
         </TouchableOpacity>
       </View>
     </View>

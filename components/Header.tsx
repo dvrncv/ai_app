@@ -11,17 +11,20 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAppDispatch, useAppSelector } from "../hooks/hooks";
+import { logout } from '@/redux/slices/auth';
 
 export default function Header(){
   const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
-  const handleLogout = (event: GestureResponderEvent) => {
+const handleLogout = () => {
+    dispatch(logout());
     setModalVisible(false);
-    console.log('Выполнен выход');
     router.replace('/LoginPage');
-
   };
+
 
   return (
     <View style={styles.container}>

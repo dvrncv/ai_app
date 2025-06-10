@@ -5,14 +5,28 @@ import {
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome, Entypo, MaterialIcons } from '@expo/vector-icons';
+import { useDispatch} from 'react-redux';
+import { login} from '../redux/slices/auth'; 
+import { AppDispatch } from '../redux/store'; 
+
 
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const [email, setEmail] = useState('');  
+  const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    router.replace('(tabs)');
+  const handleLogin = async () => {
+    try {
+      await dispatch(login({login: email, password })).unwrap();
+      console.log('Успешный вход');
+      router.replace('/(tabs)'); 
+    } catch (error) {
+      console.error('Ошибка входа:', error);
+      alert('Неверный email или пароль');
+    }
   };
 
   return (
@@ -45,7 +59,12 @@ export default function LoginPage() {
 
         <Text style={styles.label}>Email</Text>
         <View style={styles.inputRow}>
-          <TextInput style={styles.input} placeholder="Введите email" />
+          <TextInput 
+            style={styles.input} 
+            placeholder="Введите email" 
+            value={email}
+            onChangeText={setEmail}
+          />
           <FontAwesome name="envelope-o" size={20} color="#2E70C9" />
         </View>
 
@@ -54,6 +73,8 @@ export default function LoginPage() {
           <TextInput
             style={styles.input}
             placeholder="Введите пароль"
+            value={password}
+            onChangeText={setPassword}
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
