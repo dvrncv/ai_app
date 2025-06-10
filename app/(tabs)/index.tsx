@@ -147,6 +147,15 @@ export default function HomeScreen() {
             >
               <Text style={styles.buttonText}>Что надеть сейчас</Text>
             </TouchableOpacity>
+            
+            {loading && <ActivityIndicator size="large" color="#4A90E2" />}
+      
+            {error ? (
+              <Text style={styles.errorText}>{error}</Text>
+            ) : (
+              <Text style={styles.recommendationText}>{clothingRecommendation}</Text>
+            )}
+      
 
             <TouchableOpacity 
               style={styles.button}
@@ -156,15 +165,6 @@ export default function HomeScreen() {
               <Text style={styles.buttonText}>Рекомендация на день</Text>
             </TouchableOpacity>
             
-
-            {loading && <ActivityIndicator size="large" color="#4A90E2" />}
-      
-            {error ? (
-              <Text style={styles.errorText}>{error}</Text>
-            ) : (
-              <Text style={styles.recommendationText}>{clothingRecommendation}</Text>
-            )}
-      
             
           </View>
     </View>
