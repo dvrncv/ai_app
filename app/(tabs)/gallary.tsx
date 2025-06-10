@@ -74,7 +74,7 @@ export default function GalleryScreen() {
       const response = await fetch(uri);
       const blob = await response.blob();
       const file = new File([blob], 'photo.jpg', { type: blob.type });
-      
+      console.log(file);
       await dispatch(uploadFile(file)).unwrap();
       dispatch(fetchWardrobeItems());
     } catch (error) {
