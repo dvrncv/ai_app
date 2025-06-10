@@ -2,16 +2,20 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authReducer } from "./slices/auth";
+import { wardrobeReducer } from "./slices/wardrobeSlice"; 
+
 
 
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
-  whitelist: ["auth"],
+  whitelist: ["auth", "wardrobe"],
 };
 
 const rootReducer = combineReducers({
-  auth: authReducer
+  auth: authReducer,
+  wardrobe: wardrobeReducer
+
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

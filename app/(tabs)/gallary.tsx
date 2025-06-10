@@ -1,30 +1,37 @@
-import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import React, { useState } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, Alert, Modal, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Modal, Pressable } from 'react-native';
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+import { login} from '@/redux/slices/auth';
+import { uploadFile, fetchWardrobeItems} from '@/redux/slices/wardrobeSlice';
+
 
 
 type GalleryItem = {
   id: number;
   image: {
-    uri?: string;
-  } | number; 
+    uri: string;
+  };
 };
 
 export default function GalleryScreen() {
-  const [selectedImage, setSelectedImage] = useState(null);
+  const dispatch = useAppDispatch();
+  const { items, loadingItems, errorItems, loadingUpload } = useAppSelector(state => state.wardrobe);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [pickPhotoModal, setPickPhotoModal] = useState(false);
   const [photoModal, setPhotoModal] = useState(false);
 
-  const [galleryItems, setGalleryItems] = useState([
-    { id: 1, image: require('@/assets/images/outfit.png') },
-    { id: 2, image: require('@/assets/images/outfit.png') },
-    { id: 3, image: require('@/assets/images/outfit.png') },
-    { id: 4, image: require('@/assets/images/outfit.png') },
-  ]);
+  useEffect(() => {
+    dispatch(fetchWardrobeItems());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (errorItems) {
+      Alert.alert('Ошибка', errorItems);
+    }
+  }, [errorItems]);
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -39,8 +46,7 @@ export default function GalleryScreen() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      const newImage = { id: Date.now(), image: { uri: result.assets[0].uri } };
-      setGalleryItems((prevItems) => [...prevItems, newImage]);
+      await handleImageUpload(result.assets[0].uri);
     }
     setPhotoModal(false); 
   };
@@ -58,10 +64,22 @@ export default function GalleryScreen() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      const newImage = { id: Date.now(), image: { uri: result.assets[0].uri } };
-      setGalleryItems((prevItems) => [...prevItems, newImage]);
+      await handleImageUpload(result.assets[0].uri);
     }
     setPhotoModal(false);
+  };
+
+  const handleImageUpload = async (uri: string) => {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const file = new File([blob], 'photo.jpg', { type: blob.type });
+      
+      await dispatch(uploadFile(file)).unwrap();
+      dispatch(fetchWardrobeItems());
+    } catch (error) {
+      Alert.alert('Ошибка загрузки', 'Не удалось загрузить изображение');
+    }
   };
 
   const showActionModal = () => {
@@ -73,46 +91,54 @@ export default function GalleryScreen() {
       <Header />
 
       <Modal visible={pickPhotoModal} transparent={true}>
-      <View style={styles.modalContainer}>
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setPickPhotoModal(false)}
-        />
-        <Image
-          source={
-            typeof selectedImage === 'number'
-              ? selectedImage
-              : { uri: selectedImage?.uri }
-          }
-          style={styles.fullscreenImage}
-        />
-      </View>
-    </Modal>
-
-    <Modal visible={photoModal} transparent={true} animationType="slide">
-      <View style={styles.photoModalContainer}>
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setPhotoModal(false)}
-        />
-        <View style={styles.photoModalContent}>
-          <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
-            <MaterialCommunityIcons name="camera" size={24} color="#4182C2" />
-            <Text style={styles.photoButtonText}>Сделать фото</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-            <MaterialCommunityIcons name="image" size={24} color="#4182C2" />
-            <Text style={styles.photoButtonText}>Выбрать из галереи</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.cancelButton} 
-            onPress={() => setPhotoModal(false)}
-          >
-            <Text style={styles.cancelButtonText}>Отмена</Text>
-          </TouchableOpacity>
+        <View style={styles.modalContainer}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setPickPhotoModal(false)}
+          />
+          <Image
+            source={{ uri: selectedImage }}
+            style={styles.fullscreenImage}
+          />
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      <Modal visible={photoModal} transparent={true} animationType="slide">
+        <View style={styles.photoModalContainer}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setPhotoModal(false)}
+          />
+          <View style={styles.photoModalContent}>
+            <TouchableOpacity 
+              style={styles.photoButton} 
+              onPress={takePhoto}
+              disabled={loadingUpload}
+            >
+              <MaterialCommunityIcons name="camera" size={24} color="#4182C2" />
+              <Text style={styles.photoButtonText}>
+                {loadingUpload ? 'Загрузка...' : 'Сделать фото'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.photoButton} 
+              onPress={pickImage}
+              disabled={loadingUpload}
+            >
+              <MaterialCommunityIcons name="image" size={24} color="#4182C2" />
+              <Text style={styles.photoButtonText}>
+                {loadingUpload ? 'Загрузка...' : 'Выбрать из галереи'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.cancelButton} 
+              onPress={() => setPhotoModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Отмена</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.uploadBox}>
@@ -124,29 +150,38 @@ export default function GalleryScreen() {
           />
           <TouchableOpacity 
             style={styles.uploadButton} 
-            onPress={showActionModal} 
+            onPress={showActionModal}
+            disabled={loadingUpload}
           >
-            <Text style={styles.uploadButtonText}>Загрузить фотографию</Text>
+            <Text style={styles.uploadButtonText}>
+              {loadingUpload ? 'Загрузка...' : 'Загрузить фотографию'}
+            </Text>
           </TouchableOpacity>
         </View>
         
-        <View style={styles.galleryGrid}>
-          {galleryItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.galleryItem}
-              onPress={() => {
-                setSelectedImage(item.image);
-                setPickPhotoModal(true);
-              }}
-            >
-              <Image
-                source={typeof item.image === 'number' ? item.image : { uri: item.image.uri }}
-                style={styles.galleryImage}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
+        {loadingItems ? (
+          <View style={styles.loadingContainer}>
+            <Text>Загрузка галереи...</Text>
+          </View>
+        ) : (
+          <View style={styles.galleryGrid}>
+            {items.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.galleryItem}
+                onPress={() => {
+                  setSelectedImage(item.link);
+                  setPickPhotoModal(true);
+                }}
+              >
+                <Image
+                  source={{ uri: item.link }}
+                  style={styles.galleryImage}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -158,52 +193,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   content: {
-    padding: 20,
-    paddingTop: 10,
-  },
-  uploadContainer: {
-    marginBottom: 20,
-    alignItems: 'center',
+    padding: 16,
   },
   uploadBox: {
-    backgroundColor: '#E8F1FB',
-    borderRadius: 10,
-    paddingVertical: 30,
-    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#4182C2',
+    borderRadius: 10,
+    borderStyle: 'dashed',
     marginBottom: 20,
+  },
+  uploadIcon: {
+    marginBottom: 10,
   },
   uploadButton: {
     backgroundColor: '#4182C2',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  uploadIcon: {
-    marginBottom: 16,
-  },
-  uploadIconText: {
-    color: 'white',
-    fontSize: 20,
-    lineHeight: 20,
-    fontFamily: 'Lora-Bold',
+    padding: 10,
+    borderRadius: 5,
   },
   uploadButtonText: {
-  color: 'white',
-  fontSize: 20,
-  fontFamily: 'Lora-Bold',
-  },
-  galleryTitle: {
-  fontSize: 20,
-  marginBottom: 15,
-  color: '#4182C2',
-  fontFamily: 'Lora-Bold',
-  borderWidth: 4,              
-  borderColor: '#4182C2',      
-  padding: 8,                 
-  borderRadius: 8,             
-  textAlign: 'center',         
+    color: 'white',
+    fontWeight: 'bold',
   },
   galleryGrid: {
     flexDirection: 'row',
@@ -213,68 +225,65 @@ const styles = StyleSheet.create({
   galleryItem: {
     width: '48%',
     aspectRatio: 1,
-    marginBottom: 15,
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: '#F5F5F5',
+    marginBottom: 10,
   },
   galleryImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    borderRadius: 5,
   },
   modalContainer: {
-  flex: 1,
-  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  justifyContent: 'center',
-  alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   fullscreenImage: {
     width: '90%',
-    height: '70%',
+    height: '80%',
     resizeMode: 'contain',
-    borderRadius: 12,
-    zIndex: 10,
   },
   photoModalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'transparent',
   },
   photoModalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
-    paddingBottom: 30,
   },
   photoButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    padding: 15,
   },
   photoButtonText: {
-    marginLeft: 16,
-    fontSize: 18,
-    color: '#333',
-    fontFamily: 'Lora-Bold',
+    marginLeft: 15,
+    fontSize: 16,
   },
   cancelButton: {
-    marginTop: 16,
-    padding: 16,
+    padding: 15,
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    marginTop: 10,
   },
   cancelButtonText: {
-    fontSize: 18,
-    color: '#E74C3C',
-    fontFamily: 'Lora-Bold',
+    color: 'red',
+    fontSize: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
 });
