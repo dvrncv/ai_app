@@ -19,7 +19,6 @@ export default function HomeScreen() {
   const handleLogout = () => {
     setModalVisible(false);
     console.log('Выполнен выход');
-  
   };
     const [temperature, setTemperature] = useState('');
     const [clothingRecommendation, setClothingRecommendation] = useState('');
@@ -146,10 +145,18 @@ export default function HomeScreen() {
               onPress={getClothingRecommendation}
               disabled={loading}
             >
-              <Text style={styles.buttonText}>Получить предложение</Text>
+              <Text style={styles.buttonText}>Что надеть сейчас</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={getClothingRecommendation}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>Рекомендация на день</Text>
             </TouchableOpacity>
             
-      
+
             {loading && <ActivityIndicator size="large" color="#4A90E2" />}
       
             {error ? (
