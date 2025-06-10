@@ -12,10 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-type HeaderProps = {
-  fontLoaded: boolean;
-};
-const Header: React.FC<HeaderProps> = () => {
+export default function Header(){
   const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
 
@@ -76,7 +73,7 @@ const Header: React.FC<HeaderProps> = () => {
   );
 };
 
-export default Header;
+
 const styles = StyleSheet.create({
   container: {
     height:100,

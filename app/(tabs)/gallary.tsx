@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import React, { useState } from 'react';
 import Header from '@/components/Header';
@@ -7,10 +7,17 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Modal, Pressable } from 'react-native';
 
 
+type GalleryItem = {
+  id: number;
+  image: {
+    uri?: string;
+  } | number; 
+};
 
 export default function GalleryScreen() {
   const [selectedImage, setSelectedImage] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [pickPhotoModal, setPickPhotoModal] = useState(false);
+  const [photoModal, setPhotoModal] = useState(false);
 
   const [galleryItems, setGalleryItems] = useState([
     { id: 1, image: require('@/assets/images/outfit.png') },
@@ -18,8 +25,8 @@ export default function GalleryScreen() {
     { id: 3, image: require('@/assets/images/outfit.png') },
     { id: 4, image: require('@/assets/images/outfit.png') },
   ]);
-    const pickImage = async () => {
-  
+
+  const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       alert('Нужно разрешение для доступа к галерее!');
@@ -35,37 +42,94 @@ export default function GalleryScreen() {
       const newImage = { id: Date.now(), image: { uri: result.assets[0].uri } };
       setGalleryItems((prevItems) => [...prevItems, newImage]);
     }
+    setPhotoModal(false); 
   };
 
-  
+  const takePhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert('Нужно разрешение для доступа к камере!');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const newImage = { id: Date.now(), image: { uri: result.assets[0].uri } };
+      setGalleryItems((prevItems) => [...prevItems, newImage]);
+    }
+    setPhotoModal(false);
+  };
+
+  const showActionModal = () => {
+    setPhotoModal(true);
+  };
+
   return (
     <View style={styles.mainContainer}>
       <Header />
-          <Modal visible={modalVisible} transparent={true}>
-            <View style={styles.modalContainer}>
-              <Pressable
-                style={styles.modalBackdrop}
-                onPress={() => setModalVisible(false)}
-              />
-              <Image
-                source={
-                  typeof selectedImage === 'number'
-                    ? selectedImage
-                    : { uri: selectedImage?.uri }
-                }
-                style={styles.fullscreenImage}
-              />
-            </View>
-          </Modal>
-          
+
+      <Modal visible={pickPhotoModal} transparent={true}>
+      <View style={styles.modalContainer}>
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setPickPhotoModal(false)}
+        />
+        <Image
+          source={
+            typeof selectedImage === 'number'
+              ? selectedImage
+              : { uri: selectedImage?.uri }
+          }
+          style={styles.fullscreenImage}
+        />
+      </View>
+    </Modal>
+
+    <Modal visible={photoModal} transparent={true} animationType="slide">
+      <View style={styles.photoModalContainer}>
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setPhotoModal(false)}
+        />
+        <View style={styles.photoModalContent}>
+          <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
+            <MaterialCommunityIcons name="camera" size={24} color="#4182C2" />
+            <Text style={styles.photoButtonText}>Сделать фото</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+            <MaterialCommunityIcons name="image" size={24} color="#4182C2" />
+            <Text style={styles.photoButtonText}>Выбрать из галереи</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.cancelButton} 
+            onPress={() => setPhotoModal(false)}
+          >
+            <Text style={styles.cancelButtonText}>Отмена</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+      
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.uploadBox}>
-        <MaterialCommunityIcons name="cloud-upload-outline" size={100} color="#4182C2" style={styles.uploadIcon} />
-        <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
-          <Text style={styles.uploadButtonText}>Загрузить фотографию</Text>
-        </TouchableOpacity>
-      </View>
-        <Text style={styles.galleryTitle}>Моя галерея</Text>
+          <MaterialCommunityIcons 
+            name="cloud-upload-outline" 
+            size={100} 
+            color="#4182C2" 
+            style={styles.uploadIcon} 
+          />
+          <TouchableOpacity 
+            style={styles.uploadButton} 
+            onPress={showActionModal} 
+          >
+            <Text style={styles.uploadButtonText}>Загрузить фотографию</Text>
+          </TouchableOpacity>
+        </View>
+        
         <View style={styles.galleryGrid}>
           {galleryItems.map((item) => (
             <TouchableOpacity
@@ -73,14 +137,14 @@ export default function GalleryScreen() {
               style={styles.galleryItem}
               onPress={() => {
                 setSelectedImage(item.image);
-                setModalVisible(true);
+                setPickPhotoModal(true);
               }}
             >
-                <Image
-                  source={typeof item.image === 'number' ? item.image : { uri: item.image.uri }}
-                  style={styles.galleryImage}
-                />
-              </TouchableOpacity>
+              <Image
+                source={typeof item.image === 'number' ? item.image : { uri: item.image.uri }}
+                style={styles.galleryImage}
+              />
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
@@ -174,5 +238,43 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     borderRadius: 12,
     zIndex: 10,
+  },
+  photoModalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'transparent',
+  },
+  photoModalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 20,
+    paddingBottom: 30,
+  },
+  photoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  photoButtonText: {
+    marginLeft: 16,
+    fontSize: 18,
+    color: '#333',
+    fontFamily: 'Lora-Bold',
+  },
+  cancelButton: {
+    marginTop: 16,
+    padding: 16,
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 10,
+  },
+  cancelButtonText: {
+    fontSize: 18,
+    color: '#E74C3C',
+    fontFamily: 'Lora-Bold',
   },
 });
