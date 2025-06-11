@@ -1,11 +1,10 @@
-import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, Alert, Modal, Pressable } from 'react-native';
-import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
-import * as ImagePicker from 'expo-image-picker';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
-import { login} from '@/redux/slices/auth';
-import { uploadFile, fetchWardrobeItems} from '@/redux/slices/wardrobeSlice';
+import { fetchWardrobeItems, uploadFile } from '@/redux/slices/wardrobeSlice';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useState } from 'react';
+import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
 
@@ -22,6 +21,7 @@ export default function GalleryScreen() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [pickPhotoModal, setPickPhotoModal] = useState(false);
   const [photoModal, setPhotoModal] = useState(false);
+  
 
   useEffect(() => {
     dispatch(fetchWardrobeItems());
@@ -69,18 +69,21 @@ export default function GalleryScreen() {
     setPhotoModal(false);
   };
 
-  const handleImageUpload = async (uri: string) => {
-    try {
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const file = new File([blob], 'photo.jpg', { type: blob.type });
-      console.log(file);
-      await dispatch(uploadFile(file)).unwrap();
-      dispatch(fetchWardrobeItems());
-    } catch (error) {
-      Alert.alert('Ошибка загрузки', 'Не удалось загрузить изображение');
-    }
-  };
+const handleImageUpload = async (uri: string) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: uri.startsWith('file://') ? uri : `file://${uri}`,
+      type: 'image/jpeg',
+      name: `photo_${Date.now()}.jpg`,
+    } as any);
+
+    await dispatch(uploadFile(formData)).unwrap();
+    dispatch(fetchWardrobeItems());
+  } catch (error) {
+    Alert.alert('Ошибка загрузки', 'Не удалось загрузить изображение');
+  }
+};
 
   const showActionModal = () => {
     setPhotoModal(true);

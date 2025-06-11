@@ -1,7 +1,5 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "../axiosInstance";
-import { STATUS } from "../../constant";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface WardrobeItem {
     id: number;
@@ -11,21 +9,20 @@ export interface WardrobeItem {
 export interface Params {
     lat: number;
     lon: number;
+    forecast: boolean;
 } 
 
 interface WardrobeState {
     items: WardrobeItem[];
-    recommendations: WardrobeItem[];
+    currentRecommendations: WardrobeItem[]; 
+    dailyRecommendations: WardrobeItem[];
     loadingItems: boolean;
     loadingRecommendations: boolean;
     loadingUpload: boolean;
 } 
-export const uploadFile = createAsyncThunk<{ link: string; name: string }, File>(
+export const uploadFile = createAsyncThunk<{ link: string; name: string }, FormData>(
     'wardrobe/upload',
-    async (file, thunkAPI) => {
-        const formData = new FormData();
-        formData.append('file', file);
-
+    async (formData, thunkAPI) => {
         try {
         const response = await axios.post('/wardrobe/upload', formData);
         return response.data;
@@ -47,24 +44,28 @@ export const fetchWardrobeItems = createAsyncThunk<WardrobeItem[]>(
     }
     }
 ); 
-export const fetchRecommendations = createAsyncThunk<WardrobeItem[], Params >(
-    'wardrobe/recommend',
-    async (coords, thunkAPI) => {
-    const { lat, lon } = coords;
-    try {
-        const response = await axios.get<WardrobeItem[]>(
-        `/wardrobe/recommend?lat=${lat}&lon=${lon}`
-        );
-        return response.data;
-    } catch (error: any) {
-        return thunkAPI.rejectWithValue(error.message);
-    }
-    }
-); 
+    export const fetchRecommendations = createAsyncThunk<{ items: WardrobeItem[]; forecast: boolean },Params>(
+        "wardrobe/recommend",
+        async (params, thunkAPI) => {
+            try {
+            const response = await axios.get<WardrobeItem[]>(
+                `/wardrobe/recommend?lat=${params.lat}&lon=${params.lon}&forecast=${params.forecast}`
+            );
+            return {
+                items: response.data,
+                forecast: params.forecast,
+            };
+            } catch (err: any) {
+            return thunkAPI.rejectWithValue(err.message);
+            }
+        }
+    );
+   
 
 const initialState: WardrobeState = {
     items: [],
-    recommendations: [],
+    currentRecommendations: [],
+    dailyRecommendations: [],
     loadingItems: false,
     loadingRecommendations: false,
     loadingUpload: false
@@ -101,13 +102,17 @@ const wardrobeSlice = createSlice({
             state.loadingItems = false;
         })
         .addCase(fetchRecommendations.pending, (state) => {
-            state.loadingRecommendations = true;
+        state.loadingRecommendations = true;
         })
         .addCase(fetchRecommendations.fulfilled, (state, action) => {
             state.loadingRecommendations = false;
-            state.recommendations = action.payload;
+            if (action.payload.forecast) {
+            state.dailyRecommendations = action.payload.items;
+            } else {
+            state.currentRecommendations = action.payload.items;
+            }
         })
-        .addCase(fetchRecommendations.rejected, (state, action) => {
+        .addCase(fetchRecommendations.rejected, (state) => {
             state.loadingRecommendations = false;
         });
     },
