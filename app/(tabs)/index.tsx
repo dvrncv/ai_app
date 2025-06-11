@@ -8,13 +8,10 @@ import {
   StyleSheet,
   FlatList,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchRecommendations, fetchRecommendationsTrue } from '@/redux/slices/wardrobeSlice';
+import { fetchRecommendations } from '@/redux/slices/wardrobeSlice';
 import Header from '../../components/Header';
-
-
 
 interface WardrobeItem {
   id: number;
@@ -23,7 +20,6 @@ interface WardrobeItem {
 }
 
 export default function HomeScreen() {
-  const router = useRouter();
   const dispatch = useDispatch();
   const { 
     currentRecommendations, 
@@ -31,11 +27,12 @@ export default function HomeScreen() {
     loadingRecommendations 
   } = useSelector((state: any) => state.wardrobe);
 
-  const [modalVisible, setModalVisible] = useState(false);
   const [temperature, setTemperature] = useState('');
   const [weatherDescription, setWeatherDescription] = useState('');
   const [weatherCondition, setWeatherCondition] = useState('Default');
   const [error, setError] = useState('');
+  const [showCurrentRecommendations, setShowCurrentRecommendations] = useState(false);
+  const [showDailyRecommendations, setShowDailyRecommendations] = useState(false);
 
   const weatherIcons = {
     Clear: require('../../assets/weatherImages/Clear.png'),
@@ -54,10 +51,6 @@ export default function HomeScreen() {
     return weatherIcons[condition] || weatherIcons['Default'];
   };
 
-  const handleLogout = () => {
-    setModalVisible(false);
-    console.log('Выполнен выход');
-  };
 
   const getWeatherData = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -92,36 +85,49 @@ export default function HomeScreen() {
 
   const getClothingRecommendation = async () => {
     setError('');
-    try {
-      const coords = await getWeatherData();
-      if (coords) {
-        dispatch(fetchRecommendations({
-          lat: coords.latitude,
-          lon: coords.longitude,
-          forecast: false
-        }) as any);
+    if(showCurrentRecommendations){
+      setShowCurrentRecommendations(false);
+    }else{
+      try {
+        const coords = await getWeatherData();
+        if (coords) {
+          await dispatch(fetchRecommendations({
+            lat: coords.latitude,
+            lon: coords.longitude,
+            forecast: false
+          }) as any);
+          setShowCurrentRecommendations(true);
+        }
+      } catch (err) {
+        setError('Не удалось получить рекомендацию');
       }
-    } catch (err) {
-      setError('Не удалось получить рекомендацию');
     }
+      
+  ;
+    
   };
 
   const getDailyRecommendation = async () => {
     setError('');
-    try {
-      const coords = await getWeatherData();
-      if (coords) {
-        dispatch(fetchRecommendations({
-          lat: coords.latitude,
-          lon: coords.longitude,
-          forecast: true
-        }) as any);
+    if(showDailyRecommendations){
+      setShowDailyRecommendations(false);
+    }else{
+      try {
+        const coords = await getWeatherData();
+        if (coords) {
+          await dispatch(fetchRecommendations({
+            lat: coords.latitude,
+            lon: coords.longitude,
+            forecast: true
+          }) as any);
+          setShowDailyRecommendations(true);
+        }
+      } catch (err) {
+        setError('Не удалось получить дневную рекомендацию');
       }
-    } catch (err) {
-      setError('Не удалось получить дневную рекомендацию');
-    }
+    };
+    
   };
-
 
   useEffect(() => {
     getWeatherData();
@@ -156,11 +162,12 @@ export default function HomeScreen() {
         >
           <Text style={styles.buttonText}>Что надеть сейчас</Text>
         </TouchableOpacity>
+        
         {loadingRecommendations ? (
           <ActivityIndicator size="large" color="#4A90E2" />
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
-        ) : currentRecommendations?.length > 0 ? (
+        ) : showCurrentRecommendations && currentRecommendations?.length > 0 ? (
           <View style={styles.recommendationsContainer}>
             <Text style={styles.recommendationText}>Рекомендуем сейчас:</Text>
             <FlatList
@@ -200,7 +207,7 @@ export default function HomeScreen() {
           <ActivityIndicator size="large" color="#4A90E2" />
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
-        ) : dailyRecommendations?.length > 0 ? (
+        ) : showDailyRecommendations && dailyRecommendations?.length > 0 ? (
           <View style={styles.recommendationsContainer}>
             <Text style={styles.recommendationText}>Рекомендуем на день:</Text>
             <FlatList
@@ -311,7 +318,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   listContent: {
-  paddingHorizontal: 10,
-},
-
+    paddingHorizontal: 10,
+  },
 });
