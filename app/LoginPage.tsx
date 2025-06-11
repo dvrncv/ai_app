@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FontAwesome, Entypo, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, Entypo} from '@expo/vector-icons';
 import { useDispatch} from 'react-redux';
 import { login} from '../redux/slices/auth'; 
 import { AppDispatch } from '../redux/store'; 

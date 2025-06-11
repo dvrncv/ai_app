@@ -1,10 +1,9 @@
-import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
+import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView, Modal, Pressable } from 'react-native';
 import React, { useState } from 'react';
 import Header from '@/components/Header';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Modal, Pressable } from 'react-native';
+
 
 
 type GalleryItem = {
