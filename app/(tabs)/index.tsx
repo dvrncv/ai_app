@@ -14,19 +14,12 @@ import { fetchRecommendations } from '@/redux/slices/wardrobeSlice';
 import Header from '../../components/Header';
 
 
-
-interface WardrobeItem {
-  id: number;
-  name: string;
-  link: string;
-}
-
 export default function HomeScreen() {
   const dispatch = useDispatch();
-  const {
-    currentRecommendations,
-    dailyRecommendations,
-    loadingRecommendations,
+  const { 
+    currentRecommendations, 
+    dailyRecommendations, 
+    loadingRecommendations 
   } = useSelector((state: any) => state.wardrobe);
 
   const [temperature, setTemperature] = useState('');
@@ -53,10 +46,6 @@ export default function HomeScreen() {
     return weatherIcons[condition] || weatherIcons['Default'];
   };
 
-  const handleLogout = () => {
-    setModalVisible(false);
-    console.log('Выполнен выход');
-  };
 
   const getWeatherData = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -74,7 +63,7 @@ export default function HomeScreen() {
         `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&lang=ru&appid=${apiKey}`
       );
       const data = await response.json();
-
+      
       const temp = Math.round(data.main.temp);
       const condition = data.weather[0].main;
 
@@ -91,36 +80,49 @@ export default function HomeScreen() {
 
   const getClothingRecommendation = async () => {
     setError('');
-    try {
-      const coords = await getWeatherData();
-      if (coords) {
-        dispatch(fetchRecommendations({
-          lat: coords.latitude,
-          lon: coords.longitude,
-          forecast: false
-        }) as any);
+    if(showCurrentRecommendations){
+      setShowCurrentRecommendations(false);
+    }else{
+      try {
+        const coords = await getWeatherData();
+        if (coords) {
+          await dispatch(fetchRecommendations({
+            lat: coords.latitude,
+            lon: coords.longitude,
+            forecast: false
+          }) as any);
+          setShowCurrentRecommendations(true);
+        }
+      } catch (err) {
+        setError('Не удалось получить рекомендацию');
       }
-    } catch (err) {
-      setError('Не удалось получить рекомендацию');
     }
+      
+  ;
+    
   };
 
   const getDailyRecommendation = async () => {
     setError('');
-    try {
-      const coords = await getWeatherData();
-      if (coords) {
-        dispatch(fetchRecommendations({
-          lat: coords.latitude,
-          lon: coords.longitude,
-          forecast: true
-        }) as any);
+    if(showDailyRecommendations){
+      setShowDailyRecommendations(false);
+    }else{
+      try {
+        const coords = await getWeatherData();
+        if (coords) {
+          await dispatch(fetchRecommendations({
+            lat: coords.latitude,
+            lon: coords.longitude,
+            forecast: true
+          }) as any);
+          setShowDailyRecommendations(true);
+        }
+      } catch (err) {
+        setError('Не удалось получить дневную рекомендацию');
       }
-    } catch (err) {
-      setError('Не удалось получить дневную рекомендацию');
-    }
+    };
+    
   };
-
 
   useEffect(() => {
     getWeatherData();
@@ -128,28 +130,11 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  const renderRecommendationItem = ({ item }) => {
-    const uri = encodeURI(item.link);
-    return (
-      <View style={styles.recommendationItem}>
-        <Image
-          source={{ uri }}
-          style={styles.recommendationImage}
-          resizeMode="cover"
-          onError={(e) =>
-            console.log('Image load error:', e.nativeEvent.error)
-          }
-        />
-        <Text style={styles.recommendationItemText}>
-          {item.name || 'Без названия'}
-        </Text>
-      </View>
-    );
-  };
-
   return (
     <View style={styles.mainContainer}>
-      <Header />
+      <View>
+        <Header />
+      </View>
       <View style={styles.container}>
         {weatherCondition && (
           <View style={styles.weatherContainer}>
@@ -165,13 +150,14 @@ export default function HomeScreen() {
           </View>
         )}
 
-        <TouchableOpacity
+        <TouchableOpacity 
           style={styles.button}
           onPress={getClothingRecommendation}
           disabled={loadingRecommendations}
         >
           <Text style={styles.buttonText}>Что надеть сейчас</Text>
         </TouchableOpacity>
+        
         {loadingRecommendations ? (
           <ActivityIndicator size="large" color="#4A90E2" />
         ) : error ? (
@@ -183,15 +169,28 @@ export default function HomeScreen() {
               horizontal
               data={currentRecommendations}
               keyExtractor={(item, index) => item?.name + index}
-              renderItem={renderRecommendationItem}
-              ListEmptyComponent={
-                <Text style={styles.noRecommend}>Нет рекомендаций</Text>
-              }
+              renderItem={({ item }) => {
+                const uri = encodeURI(item.link); 
+                return (
+                  <View style={styles.recommendationItem}>
+                    <Image
+                      source={{ uri }}
+                      style={styles.recommendationImage}
+                      resizeMode="cover"
+                      onError={(e) => console.log('Image load error:', e.nativeEvent.error)} 
+                    />
+                    <Text style={styles.recommendationItemText}>
+                      {item.name || 'Без названия'}
+                    </Text>
+                  </View>
+                );
+              }}
+              ListEmptyComponent={<Text style={styles.emptyText}>Нет рекомендаций</Text>}
             />
           </View>
         ) : null}
 
-        <TouchableOpacity
+        <TouchableOpacity 
           style={styles.button}
           onPress={getDailyRecommendation}
           disabled={loadingRecommendations}
@@ -210,10 +209,23 @@ export default function HomeScreen() {
               horizontal
               data={dailyRecommendations}
               keyExtractor={(item, index) => item?.name + index}
-              renderItem={renderRecommendationItem}
-              ListEmptyComponent={
-                <Text style={styles.noRecommend}>Нет рекомендаций</Text>
-              }
+              renderItem={({ item }) => {
+                const uri = encodeURI(item.link);
+                return (
+                  <View style={styles.recommendationItem}>
+                    <Image
+                      source={{ uri }}
+                      style={styles.recommendationImage}
+                      resizeMode="cover"
+                      onError={(e) => console.log('Image load error:', e.nativeEvent.error)} 
+                    />
+                    <Text style={styles.recommendationItemText}>
+                      {item.name || 'Без названия'}
+                    </Text>
+                  </View>
+                );
+              }}
+              ListEmptyComponent={<Text style={styles.emptyText}>Нет рекомендаций</Text>}
             />
           </View>
         ) : null}
@@ -290,13 +302,17 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: 15,
   },
-  noRecommend: {
+  imagePlaceholder: {
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
     textAlign: 'center',
     color: '#666',
     marginTop: 10,
   },
   listContent: {
-  paddingHorizontal: 10,
-},
-
+    paddingHorizontal: 10,
+  },
 });

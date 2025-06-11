@@ -3,7 +3,6 @@ import { useAppDispatch, useAppSelector } from '@/hooks/hooks';
 import { fetchWardrobeItems } from '@/redux/slices/wardrobeSlice';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import {launchImageLibrary, launchCamera, Asset, ImagePickerResponse} from 'react-native-image-picker';
 import React, { useEffect, useState } from 'react';
 import {
   Image,
@@ -22,16 +21,6 @@ type GalleryItem = {
     uri: string;
   };
 };
-interface ImageUploadData {
-  uri: string;
-  name: string;
-  type: string;
-}
-interface ImageAsset {
-  uri: string;
-  fileName?: string;
-  type?: string;
-}
 
 export default function GalleryScreen() {
   const dispatch = useAppDispatch();
@@ -52,10 +41,19 @@ export default function GalleryScreen() {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) return;
 
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
     });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const newImage = {
+        id: Date.now(),
+        image: { uri: result.assets[0].uri },
+      };
+      setGalleryItems([...galleryItems, newImage]);
+      setPickPhotoModal(false);
+    }
   };
 
   const takePhoto = async () => {
