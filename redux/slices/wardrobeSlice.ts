@@ -21,7 +21,6 @@ interface WardrobeState {
     loadingUpload: boolean;
 } 
 
-
 export const fetchWardrobeItems = createAsyncThunk<WardrobeItem[]>(
     'wardrobe',
     async (_, thunkAPI) => {

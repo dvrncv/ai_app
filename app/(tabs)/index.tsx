@@ -13,6 +13,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchRecommendations } from '@/redux/slices/wardrobeSlice';
 import Header from '../../components/Header';
 
+
+
+interface WardrobeItem {
+  id: number;
+  name: string;
+  link: string;
+}
+
 export default function HomeScreen() {
   const dispatch = useDispatch();
   const {
@@ -25,6 +33,8 @@ export default function HomeScreen() {
   const [weatherDescription, setWeatherDescription] = useState('');
   const [weatherCondition, setWeatherCondition] = useState('Default');
   const [error, setError] = useState('');
+  const [showCurrentRecommendations, setShowCurrentRecommendations] = useState(false);
+  const [showDailyRecommendations, setShowDailyRecommendations] = useState(false);
 
   const weatherIcons = {
     Clear: require('../../assets/weatherImages/Clear.png'),
@@ -39,8 +49,14 @@ export default function HomeScreen() {
     Default: require('../../assets/weatherImages/Default.png'),
   };
 
-  const getWeatherIcon = (condition: string) =>
-    weatherIcons[condition] || weatherIcons['Default'];
+  const getWeatherIcon = (condition: string) => {
+    return weatherIcons[condition] || weatherIcons['Default'];
+  };
+
+  const handleLogout = () => {
+    setModalVisible(false);
+    console.log('Выполнен выход');
+  };
 
   const getWeatherData = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -78,13 +94,11 @@ export default function HomeScreen() {
     try {
       const coords = await getWeatherData();
       if (coords) {
-        dispatch(
-          fetchRecommendations({
-            lat: coords.latitude,
-            lon: coords.longitude,
-            forecast: false,
-          }) as any
-        );
+        dispatch(fetchRecommendations({
+          lat: coords.latitude,
+          lon: coords.longitude,
+          forecast: false
+        }) as any);
       }
     } catch (err) {
       setError('Не удалось получить рекомендацию');
@@ -96,18 +110,17 @@ export default function HomeScreen() {
     try {
       const coords = await getWeatherData();
       if (coords) {
-        dispatch(
-          fetchRecommendations({
-            lat: coords.latitude,
-            lon: coords.longitude,
-            forecast: true,
-          }) as any
-        );
+        dispatch(fetchRecommendations({
+          lat: coords.latitude,
+          lon: coords.longitude,
+          forecast: true
+        }) as any);
       }
     } catch (err) {
       setError('Не удалось получить дневную рекомендацию');
     }
   };
+
 
   useEffect(() => {
     getWeatherData();
@@ -159,12 +172,11 @@ export default function HomeScreen() {
         >
           <Text style={styles.buttonText}>Что надеть сейчас</Text>
         </TouchableOpacity>
-
         {loadingRecommendations ? (
           <ActivityIndicator size="large" color="#4A90E2" />
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
-        ) : currentRecommendations?.length > 0 ? (
+        ) : showCurrentRecommendations && currentRecommendations?.length > 0 ? (
           <View style={styles.recommendationsContainer}>
             <Text style={styles.recommendationText}>Рекомендуем сейчас:</Text>
             <FlatList
@@ -191,7 +203,7 @@ export default function HomeScreen() {
           <ActivityIndicator size="large" color="#4A90E2" />
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
-        ) : dailyRecommendations?.length > 0 ? (
+        ) : showDailyRecommendations && dailyRecommendations?.length > 0 ? (
           <View style={styles.recommendationsContainer}>
             <Text style={styles.recommendationText}>Рекомендуем на день:</Text>
             <FlatList
@@ -283,4 +295,8 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 10,
   },
+  listContent: {
+  paddingHorizontal: 10,
+},
+
 });
