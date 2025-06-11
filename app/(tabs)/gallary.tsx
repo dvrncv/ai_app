@@ -1,8 +1,9 @@
 import Header from '@/components/Header';
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
-import { fetchWardrobeItems, uploadFile } from '@/redux/slices/wardrobeSlice';
+import { fetchWardrobeItems, uploadFile, uploadFileV2 } from '@/redux/slices/wardrobeSlice';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import {launchImageLibrary, launchCamera, Asset, ImagePickerResponse} from 'react-native-image-picker';
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -14,6 +15,16 @@ type GalleryItem = {
     uri: string;
   };
 };
+interface ImageUploadData {
+  uri: string;
+  name: string;
+  type: string;
+}
+interface ImageAsset {
+  uri: string;
+  fileName?: string;
+  type?: string;
+}
 
 export default function GalleryScreen() {
   const dispatch = useAppDispatch();
@@ -33,6 +44,8 @@ export default function GalleryScreen() {
     }
   }, [errorItems]);
 
+  
+
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -40,15 +53,16 @@ export default function GalleryScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
       quality: 1,
     });
 
-    if (!result.canceled && result.assets.length > 0) {
-      await handleImageUpload(result.assets[0].uri);
+    if (isValidImageResult(result)) {
+      const image = result.assets[0];
+      await handleImageUploadV2(image.uri, 1);
     }
-    setPhotoModal(false); 
+    setPhotoModal(false);
   };
 
   const takePhoto = async () => {
@@ -68,22 +82,47 @@ export default function GalleryScreen() {
     }
     setPhotoModal(false);
   };
+  const isValidImageResult = (
+    result: ImagePickerResponse
+  ): result is { assets: [Required<ImageAsset>] } => {
+    return (
+      !result.didCancel &&
+      !result.errorCode &&
+      !result.errorMessage &&
+      !!result.assets?.[0]?.uri
+    );
+  };
 
-const handleImageUpload = async (uri: string) => {
-  try {
-    const formData = new FormData();
-    formData.append('file', {
-      uri: uri.startsWith('file://') ? uri : `file://${uri}`,
-      type: 'image/jpeg',
-      name: `photo_${Date.now()}.jpg`,
-    } as any);
+  const handleImageUpload = async (data: ImageUploadData): Promise<void> => {
+    try {
+      const formData = new FormData();
+      const response = await fetch(data.uri);
+      const blob = await response.blob();
 
-    await dispatch(uploadFile(formData)).unwrap();
-    dispatch(fetchWardrobeItems());
-  } catch (error) {
-    Alert.alert('Ошибка загрузки', 'Не удалось загрузить изображение');
-  }
-};
+      formData.append('file', {
+        uri: data.uri,
+        name: data.name,
+        type: data.type ?? 'image/jpeg',
+      } as any);
+      Object.keys(response).forEach(key => {
+        data.append(key, response[key]);
+      });
+
+      await dispatch(uploadFile(formData)).unwrap();
+      dispatch(fetchWardrobeItems());
+    } catch (error) {
+      Alert.alert('Ошибка загрузки', 'Не удалось загрузить изображение');
+      console.error('Upload error:', error);
+    }
+  };
+  const handleImageUploadV2 = async (uri: string, clothingId: number) => {
+    try {
+      await dispatch(uploadFileV2({ uri, id: clothingId })).unwrap();
+      dispatch(fetchWardrobeItems());
+    } catch (error) {
+      Alert.alert('Ошибка загрузки', 'Не удалось загрузить изображение');
+    }
+  };
 
   const showActionModal = () => {
     setPhotoModal(true);

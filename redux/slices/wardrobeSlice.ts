@@ -20,11 +20,36 @@ interface WardrobeState {
     loadingRecommendations: boolean;
     loadingUpload: boolean;
 } 
+type UploadPayload = { uri: string; id: number };
+
+export const uploadFileV2 = createAsyncThunk<{ link: string; name: string },  UploadPayload >(
+  'wardrobe/upload-v2',
+  async ({ uri, id }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('id', String(id));        
+      formData.append('file', {
+        uri: uri.startsWith('file://') ? uri : `file://${uri}`,
+        type: 'image/jpeg',
+        name: `photo_${Date.now()}.jpg`,
+      } as any);
+
+      const { data } = await axios.post('/wardrobe/upload-v2', formData);
+      return data;                         
+    } catch (error: any) {
+      console.log('Ошибка загрузки v2:', error.response?.data);
+      return rejectWithValue(error.message);
+    }
+  }
+);
 export const uploadFile = createAsyncThunk<{ link: string; name: string }, FormData>(
-    'wardrobe/upload',
+    'wardrobe/upload-v2',
     async (formData, thunkAPI) => {
         try {
-        const response = await axios.post('/wardrobe/upload', formData);
+        const response = await axios.post('/wardrobe/upload-v2', formData, {
+        transformRequest: data => data,
+        });
+
         return response.data;
         } catch (error: any) {
         console.log('Ошибка загрузки:', error.response?.data);
