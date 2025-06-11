@@ -9,6 +9,7 @@ import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, Touchable
 
 
 
+
 type GalleryItem = {
   id: number;
   image: {
