@@ -1,28 +1,31 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Image
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FontAwesome, Entypo} from '@expo/vector-icons';
-import { useDispatch} from 'react-redux';
-import { login} from '../redux/slices/auth'; 
-import { AppDispatch } from '../redux/store'; 
-
-
+import { FontAwesome, Entypo } from '@expo/vector-icons';
+import { useDispatch } from 'react-redux';
+import { login } from '../redux/slices/auth';
+import { AppDispatch } from '../redux/store';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const [email, setEmail] = useState('');  
-  const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
     try {
-      await dispatch(login({login: email, password })).unwrap();
+      await dispatch(login({ login: email, password })).unwrap();
       console.log('Успешный вход');
-      router.replace('/(tabs)'); 
+      router.replace('/(tabs)');
     } catch (error) {
       console.error('Ошибка входа:', error);
       alert('Неверный email или пароль');
@@ -31,37 +34,39 @@ export default function LoginPage() {
 
   return (
     <View style={styles.container}>
-
-      <LinearGradient
-        colors={['#5DB5F3', '#2E70C9']}
-        style={styles.header}
-      >
+      <LinearGradient colors={['#5DB5F3', '#2E70C9']} style={styles.header}>
         <View style={styles.logoContainer}>
-                  <Image
-                    source={{
-                      uri: 'https://img.icons8.com/emoji/48/000000/sun-behind-cloud.png',
-                    }}
-                    style={styles.icon}
-                  />
-                  <Text style={styles.text}>ClothesWeather</Text>
-                </View>
-      
+          <Image
+            source={{
+              uri: 'https://img.icons8.com/emoji/48/000000/sun-behind-cloud.png',
+            }}
+            style={styles.icon}
+          />
+          <Text style={styles.text}>ClothesWeather</Text>
+        </View>
       </LinearGradient>
 
       <View style={styles.loginBox}>
         <View style={styles.tabs}>
-          <Text style={[styles.tab, styles.activeTab]}
+          <Text
+            style={[styles.tab, styles.activeTab]}
             onPress={() => router.replace('/LoginPage')}
-          >Вход</Text>
-          <Text style={styles.tab}
-          onPress={() => router.replace('/RegistrationPage')}>Регистрация</Text>
+          >
+            Вход
+          </Text>
+          <Text
+            style={styles.tab}
+            onPress={() => router.replace('/RegistrationPage')}
+          >
+            Регистрация
+          </Text>
         </View>
 
         <Text style={styles.label}>Email</Text>
         <View style={styles.inputRow}>
-          <TextInput 
-            style={styles.input} 
-            placeholder="Введите email" 
+          <TextInput
+            style={styles.input}
+            placeholder="Введите email"
             value={email}
             onChangeText={setEmail}
           />
@@ -78,17 +83,22 @@ export default function LoginPage() {
             secureTextEntry={!showPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Entypo name={showPassword ? "eye-with-line" : "eye"} size={20} color="#2E70C9" />
+            <Entypo
+              name={showPassword ? 'eye-with-line' : 'eye'}
+              size={20}
+              color="#2E70C9"
+            />
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}  onPress={handleLogin}>Войти</Text>
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Войти</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -102,16 +112,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoContainer: {
-    paddingTop:80,
+    paddingTop: 80,
     flexDirection: 'row',
     alignItems: 'center',
-    width: 200, 
+    width: 200,
     justifyContent: 'center',
   },
   icon: {
     width: 32,
     height: 32,
-    
   },
   text: {
     color: 'white',

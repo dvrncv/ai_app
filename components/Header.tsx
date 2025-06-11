@@ -2,7 +2,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-  GestureResponderEvent,
   Image,
   Modal,
   Pressable,
@@ -11,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppDispatch, useAppSelector } from "../hooks/hooks";
+import { useAppDispatch} from "../hooks/hooks";
 import { logout } from '@/redux/slices/auth';
 
 export default function Header(){

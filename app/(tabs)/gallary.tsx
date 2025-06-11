@@ -1,13 +1,19 @@
 import Header from '@/components/Header';
-import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
-import { fetchWardrobeItems, uploadFile } from '@/redux/slices/wardrobeSlice';
+import { useAppDispatch, useAppSelector } from '@/hooks/hooks';
+import { fetchWardrobeItems } from '@/redux/slices/wardrobeSlice';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-
-
+import {
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 type GalleryItem = {
   id: number;
@@ -18,28 +24,22 @@ type GalleryItem = {
 
 export default function GalleryScreen() {
   const dispatch = useAppDispatch();
-  const { items, loadingItems, errorItems, loadingUpload } = useAppSelector(state => state.wardrobe);
+  const { items, loadingItems, loadingUpload } = useAppSelector(
+    (state) => state.wardrobe
+  );
+
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [pickPhotoModal, setPickPhotoModal] = useState(false);
   const [photoModal, setPhotoModal] = useState(false);
-  
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
 
   useEffect(() => {
     dispatch(fetchWardrobeItems());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (errorItems) {
-      Alert.alert('Ошибка', errorItems);
-    }
-  }, [errorItems]);
-
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      alert('Нужно разрешение для доступа к галерее!');
-      return;
-    }
+    if (!permissionResult.granted) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -47,9 +47,13 @@ export default function GalleryScreen() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      await handleImageUpload(result.assets[0].uri);
+      const newImage = {
+        id: Date.now(),
+        image: { uri: result.assets[0].uri },
+      };
+      setGalleryItems([...galleryItems, newImage]);
+      setPickPhotoModal(false);
     }
-    setPhotoModal(false); 
   };
 
   const takePhoto = async () => {
@@ -65,57 +69,37 @@ export default function GalleryScreen() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      await handleImageUpload(result.assets[0].uri);
+      const newImage = {
+        id: Date.now(),
+        image: { uri: result.assets[0].uri },
+      };
+      setGalleryItems([...galleryItems, newImage]);
+      setPhotoModal(false);
     }
-    setPhotoModal(false);
-  };
-
-const handleImageUpload = async (uri: string) => {
-  try {
-    const formData = new FormData();
-    formData.append('file', {
-      uri: uri.startsWith('file://') ? uri : `file://${uri}`,
-      type: 'image/jpeg',
-      name: `photo_${Date.now()}.jpg`,
-    } as any);
-
-    await dispatch(uploadFile(formData)).unwrap();
-    dispatch(fetchWardrobeItems());
-  } catch (error) {
-    Alert.alert('Ошибка загрузки', 'Не удалось загрузить изображение');
-  }
-};
-
-  const showActionModal = () => {
-    setPhotoModal(true);
   };
 
   return (
     <View style={styles.mainContainer}>
       <Header />
-
-      <Modal visible={pickPhotoModal} transparent={true}>
+      <Modal visible={pickPhotoModal} transparent>
         <View style={styles.modalContainer}>
           <Pressable
             style={styles.modalBackdrop}
             onPress={() => setPickPhotoModal(false)}
           />
-          <Image
-            source={{ uri: selectedImage }}
-            style={styles.fullscreenImage}
-          />
+          <Image source={{ uri: selectedImage! }} style={styles.fullscreenImage} />
         </View>
       </Modal>
 
-      <Modal visible={photoModal} transparent={true} animationType="slide">
+      <Modal visible={photoModal} transparent animationType="slide">
         <View style={styles.photoModalContainer}>
           <Pressable
             style={styles.modalBackdrop}
             onPress={() => setPhotoModal(false)}
           />
           <View style={styles.photoModalContent}>
-            <TouchableOpacity 
-              style={styles.photoButton} 
+            <TouchableOpacity
+              style={styles.photoButton}
               onPress={takePhoto}
               disabled={loadingUpload}
             >
@@ -124,8 +108,9 @@ const handleImageUpload = async (uri: string) => {
                 {loadingUpload ? 'Загрузка...' : 'Сделать фото'}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.photoButton} 
+
+            <TouchableOpacity
+              style={styles.photoButton}
               onPress={pickImage}
               disabled={loadingUpload}
             >
@@ -134,8 +119,9 @@ const handleImageUpload = async (uri: string) => {
                 {loadingUpload ? 'Загрузка...' : 'Выбрать из галереи'}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.cancelButton} 
+
+            <TouchableOpacity
+              style={styles.cancelButton}
               onPress={() => setPhotoModal(false)}
             >
               <Text style={styles.cancelButtonText}>Отмена</Text>
@@ -143,18 +129,18 @@ const handleImageUpload = async (uri: string) => {
           </View>
         </View>
       </Modal>
-      
+
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.uploadBox}>
-          <MaterialCommunityIcons 
-            name="cloud-upload-outline" 
-            size={100} 
-            color="#4182C2" 
-            style={styles.uploadIcon} 
+          <MaterialCommunityIcons
+            name="cloud-upload-outline"
+            size={100}
+            color="#4182C2"
+            style={styles.uploadIcon}
           />
-          <TouchableOpacity 
-            style={styles.uploadButton} 
-            onPress={showActionModal}
+          <TouchableOpacity
+            style={styles.uploadButton}
+            onPress={() => setPhotoModal(true)}
             disabled={loadingUpload}
           >
             <Text style={styles.uploadButtonText}>
@@ -162,24 +148,35 @@ const handleImageUpload = async (uri: string) => {
             </Text>
           </TouchableOpacity>
         </View>
-        
+
         {loadingItems ? (
           <View style={styles.loadingContainer}>
             <Text>Загрузка галереи...</Text>
           </View>
         ) : (
           <View style={styles.galleryGrid}>
-            {items.map((item) => (
+            {[...galleryItems, ...items.map(item => ({
+              id: item.id,
+              image: { uri: item.link },
+            }))].map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={styles.galleryItem}
                 onPress={() => {
-                  setSelectedImage(item.link);
+                  const uri =
+                    typeof item.image === 'number'
+                      ? Image.resolveAssetSource(item.image).uri
+                      : item.image.uri;
+                  setSelectedImage(uri);
                   setPickPhotoModal(true);
                 }}
               >
                 <Image
-                  source={{ uri: item.link }}
+                  source={
+                    typeof item.image === 'number'
+                      ? item.image
+                      : { uri: item.image.uri }
+                  }
                   style={styles.galleryImage}
                 />
               </TouchableOpacity>

@@ -1,80 +1,79 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Image
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FontAwesome, Entypo, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, Entypo } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
-import { signup } from '../redux/slices/auth'; 
+import { signup } from '../redux/slices/auth';
 import type { AppDispatch } from '../redux/store';
 
-
-
-export default function LoginPage() {
+export default function RegistrationPage() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+
+  const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const dispatch = useDispatch<AppDispatch>();
-  const [login, setLogin] = useState('');
 
-const handleSignup = async () => {
+  const handleSignup = async () => {
     if (password !== confirmPassword) {
       setError('Пароли не совпадают');
       return;
     }
+
     if (!login || !password) {
       setError('Пожалуйста, заполните все поля');
       return;
     }
+
     setError('');
+
     try {
       const response = await dispatch(signup({ login, password })).unwrap();
-    if (response && response.token) {
-      router.replace('/(tabs)');
-    } else {
-      setError('Токен не получен, попробуйте войти снова');
+
+      if (response && response.token) {
+        router.replace('/(tabs)');
+      } else {
+        setError('Токен не получен, попробуйте войти снова');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Ошибка регистрации');
     }
-  } catch (err: any) {
-    setError(err.message || 'Ошибка регистрации');
-  } 
-};
+  };
 
   return (
     <View style={styles.container}>
-
-      <LinearGradient
-        colors={['#5DB5F3', '#2E70C9']}
-        style={styles.header}
-      >
+      <LinearGradient colors={['#5DB5F3', '#2E70C9']} style={styles.header}>
         <View style={styles.logoContainer}>
-                  <Image
-                    source={{
-                      uri: 'https://img.icons8.com/emoji/48/000000/sun-behind-cloud.png',
-                    }}
-                    style={styles.icon}
-                  />
-                  <Text style={styles.text}>ClothesWeather</Text>
-                </View>
-      
+          <Image
+            source={{
+              uri: 'https://img.icons8.com/emoji/48/000000/sun-behind-cloud.png',
+            }}
+            style={styles.icon}
+          />
+          <Text style={styles.text}>ClothesWeather</Text>
+        </View>
       </LinearGradient>
 
       <View style={styles.loginBox}>
         <View style={styles.tabs}>
-          <Text style={styles.tab}
-            onPress={() => router.replace('/LoginPage')}
-          >Вход</Text>
-          <Text style={[styles.tab, styles.activeTab]}
-          onPress={() => router.replace('/RegistrationPage')}>Регистрация</Text>
+          <Text style={styles.tab} onPress={() => router.replace('/LoginPage')}>
+            Вход
+          </Text>
+          <Text style={[styles.tab, styles.activeTab]} onPress={() => router.replace('/RegistrationPage')}>
+            Регистрация
+          </Text>
         </View>
 
         <Text style={styles.label}>Email</Text>
         <View style={styles.inputRow}>
-          <TextInput 
-            style={styles.input} 
-            placeholder="Введите email" 
+          <TextInput
+            style={styles.input}
+            placeholder="Введите email"
             value={login}
             onChangeText={setLogin}
           />
@@ -91,9 +90,10 @@ const handleSignup = async () => {
             onChangeText={setPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Entypo name={showPassword ? "eye-with-line" : "eye"} size={20} color="#2E70C9" />
+            <Entypo name={showPassword ? 'eye-with-line' : 'eye'} size={20} color="#2E70C9" />
           </TouchableOpacity>
         </View>
+
         <Text style={styles.label}>Подтвердите пароль</Text>
         <View style={styles.inputRow}>
           <TextInput
@@ -104,20 +104,20 @@ const handleSignup = async () => {
             onChangeText={setConfirmPassword}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Entypo name={showPassword ? "eye-with-line" : "eye"} size={20} color="#2E70C9" />
+            <Entypo name={showPassword ? 'eye-with-line' : 'eye'} size={20} color="#2E70C9" />
           </TouchableOpacity>
         </View>
-        {error !== '' && (
-            <Text style={styles.errorText}>{error}</Text>
-        )}
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}  onPress={handleSignup}>Зарегистрироваться</Text>
+        {error !== '' && <Text style={styles.errorText}>{error}</Text>}
+
+        <TouchableOpacity style={styles.button} onPress={handleSignup}>
+          <Text style={styles.buttonText}>Зарегистрироваться</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -131,26 +131,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoContainer: {
-    paddingTop:80,
+    paddingTop: 80,
     flexDirection: 'row',
     alignItems: 'center',
-    width: 200, 
+    width: 200,
     justifyContent: 'center',
   },
   icon: {
     width: 32,
     height: 32,
-    
   },
   text: {
     color: 'white',
     fontSize: 20,
     flex: 1,
-    fontFamily: 'Lora-Bold',
-  },
-  logo: {
-    color: '#fff',
-    fontSize: 24,
     fontFamily: 'Lora-Bold',
   },
   loginBox: {
@@ -175,7 +169,6 @@ const styles = StyleSheet.create({
     color: '#2E70C9',
     fontFamily: 'Lora-Bold',
     textDecorationLine: 'underline',
-    
   },
   label: {
     marginBottom: 5,
@@ -197,11 +190,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Lora-Bold',
   },
-  forgot: {
-    color: '#2E70C9',
-    textAlign: 'right',
-    marginBottom: 20,
-  },
   button: {
     backgroundColor: '#2E70C9',
     paddingVertical: 12,
@@ -215,9 +203,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Lora-Bold',
   },
   errorText: {
-  color: 'red',
-  marginTop: 5,
-  marginBottom:5,
-  fontFamily: 'Lora-Bold',
-}
+    color: 'red',
+    marginTop: 5,
+    marginBottom: 5,
+    fontFamily: 'Lora-Bold',
+  },
 });

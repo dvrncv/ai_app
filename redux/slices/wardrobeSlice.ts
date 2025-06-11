@@ -20,18 +20,7 @@ interface WardrobeState {
     loadingRecommendations: boolean;
     loadingUpload: boolean;
 } 
-export const uploadFile = createAsyncThunk<{ link: string; name: string }, FormData>(
-    'wardrobe/upload',
-    async (formData, thunkAPI) => {
-        try {
-        const response = await axios.post('/wardrobe/upload', formData);
-        return response.data;
-        } catch (error: any) {
-        console.log('Ошибка загрузки:', error.response?.data);
-        return thunkAPI.rejectWithValue(error.message);
-        }
-    }
-);
+
 
 export const fetchWardrobeItems = createAsyncThunk<WardrobeItem[]>(
     'wardrobe',
@@ -77,20 +66,6 @@ const wardrobeSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-        .addCase(uploadFile.pending, (state) => {
-        state.loadingUpload = true;
-        })
-        .addCase(uploadFile.fulfilled, (state, action) => {
-            state.loadingUpload = false;
-            state.items.push({
-                id: Date.now(),
-                name: action.payload.name,
-                link: action.payload.link,
-            });
-        })
-        .addCase(uploadFile.rejected, (state, action) => {
-            state.loadingUpload = false;
-        })
         .addCase(fetchWardrobeItems.pending, (state) => {
             state.loadingItems = true;
         })
